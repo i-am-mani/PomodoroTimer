@@ -4,11 +4,13 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Service;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -22,6 +24,8 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 public class MainActivity extends AppCompatActivity {
+
+    private String TAG = this.getClass().getSimpleName();
 
     private enum ButtonStates{
         Play,Pause;
@@ -69,6 +73,13 @@ public class MainActivity extends AppCompatActivity {
             seconds = seconds % 60;
             tvTime.setText(String.format("%d:%02d", minutes, seconds));
 
+            Log.d(TAG, "run: time = " + String.format("%d:%02d", minutes, seconds));
+
+            if (progress >= 100) {
+                btnStart.setImageResource(R.drawable.ic_play);
+                buttonState = ButtonStates.Play;
+            }
+
             progressHandler.postDelayed(this, 500);
         }
     });
@@ -84,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         Intent intent = new Intent(this, TimerService.class);
-        bindService(intent,mServiceConnection, Service.BIND_AUTO_CREATE);
+        bindService(intent,mServiceConnection, Context.BIND_AUTO_CREATE);
         //TODO Resume existing timer if found running
     }
 
@@ -99,8 +110,15 @@ public class MainActivity extends AppCompatActivity {
     public void manageTimerState(View view) {
         if (buttonState == ButtonStates.Play) {
             btnStart.setImageResource(R.drawable.ic_pause);
+            buttonState = ButtonStates.Pause;
+
             States state = mTimerService.startTimer();
             handleState(state);
+        } else if (buttonState == ButtonStates.Pause) {
+            btnStart.setImageResource(R.drawable.ic_play);
+            buttonState = ButtonStates.Play;
+
+            mTimerService.pauseTimer();
         }
     }
 
@@ -111,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setProgressbarListener() {
-
+        tvTime.postDelayed(mUpdateProgressThread, 0);
     }
 
 
@@ -120,6 +138,7 @@ public class MainActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             TimerService.ServiceBinder timerService = (TimerService.ServiceBinder) service;
             mTimerService = timerService.getService();
+            Log.d(TAG, "onServiceConnected: service alive ?  " + mTimerService);
         }
 
         @Override
