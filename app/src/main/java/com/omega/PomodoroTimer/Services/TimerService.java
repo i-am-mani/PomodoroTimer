@@ -15,16 +15,18 @@ import com.omega.PomodoroTimer.R;
 public class TimerService extends Service {
 
     private IBinder serviceBinder = new ServiceBinder();
+    private boolean PAUSE = false;
     private long mStartTime;
-    private int mIntervals = 4 ; // default intervals in each Pomodoro
+    private int mIntervals = 4; // default intervals in each Pomodoro
     private int mCurInterval = 0; // current interval number
     private long mCurTime; // current time in seconds, updated by thread.
     private long mIntervalLength; // interval end time for thread
 
-    NotificationCompat.Builder notification = new NotificationCompat.Builder(getApplicationContext(),"CHANNEL_ID_IS_TIMER")
+    NotificationCompat.Builder notification = new NotificationCompat.Builder(getApplicationContext(), "CHANNEL_ID_IS_TIMER")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("My Awesome App")
             .setContentIntent(getPendingIntent());
+
 
     private PendingIntent getPendingIntent() {
         Intent notificationIntent = new Intent(this, MainActivity.class);
@@ -48,43 +50,53 @@ public class TimerService extends Service {
 
     public class ServiceBinder extends Binder {
 
-        public TimerService getService(){
+        public TimerService getService() {
             return TimerService.this;
         }
     }
 
     private void buildNotification() {
-
-
         startForeground(1337, notification.build());
     }
 
     public void startInterval() {
         if (mCurInterval % 2 == 0) {
             mIntervalLength = convertMinToMillis(25);
-        } else if (mCurInterval == mIntervals){
+        } else if (mCurInterval == mIntervals) {
             mIntervalLength = convertMinToMillis(15);
-        } else{
+        } else {
             mIntervalLength = convertMinToMillis(5);
         }
         mStartTime = System.currentTimeMillis();
+
         new Thread(new Runnable() {
             @Override
             public void run() {
                 while (mCurTime >= mIntervalLength) {
                     try {
                         Thread.sleep(500);
-                        mCurTime = System.currentTimeMillis() - mStartTime;
+                        // If timer isn't paused, play the timer.
+                        if (!PAUSE) {
+                            mCurTime = System.currentTimeMillis() - mStartTime;  // Update time wrt to started time in MILLIS
+                        }
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
-                mCurInterval++;
+                mCurInterval++; // The interval is over, increment to next interval.
             }
         }).start();
     }
 
+    public void pauseTimer() {
+        PAUSE = true;
+    }
+
+    public void resumeTimer() {
+        PAUSE = false;
+    }
+
     private long convertMinToMillis(int i) {
-        return i*60*1000;
+        return i * 60 * 1000;
     }
 }
