@@ -5,6 +5,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -22,11 +23,7 @@ public class TimerService extends Service {
     private int mCurInterval = 0; // current interval number
     private long mCurTime = 0; // current time in seconds, updated by thread.
     private long mIntervalLength = 0; // interval end time for thread
-
-    NotificationCompat.Builder notification = new NotificationCompat.Builder(getApplicationContext(), "CHANNEL_ID_IS_TIMER")
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("My Awesome App")
-            .setContentIntent(getPendingIntent());
+    private String TAG = getClass().getSimpleName();
 
 
     private PendingIntent getPendingIntent() {
@@ -57,6 +54,11 @@ public class TimerService extends Service {
     }
 
     private void buildNotification() {
+
+        NotificationCompat.Builder notification = new NotificationCompat.Builder(this, "CHANNEL_ID_IS_TIMER")
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("My Awesome App")
+                .setContentIntent(getPendingIntent());
         startForeground(1337, notification.build());
     }
 
@@ -72,12 +74,13 @@ public class TimerService extends Service {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                while (mCurTime >= mIntervalLength) {
+                while (mCurTime <= (mIntervalLength + 1000)) {
                     try {
                         Thread.sleep(500);
                         // If timer isn't paused, play the timer.
                         if (!PAUSE) {
                             mCurTime = System.currentTimeMillis() - mStartTime;  // Update time wrt to started time in MILLIS
+                            Log.d(TAG, "run: mCurtime " + mCurTime);
                         }
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -102,7 +105,7 @@ public class TimerService extends Service {
 
         switch (currentState) {
             case Interval:
-                return convertMinToMillis(25);
+                return convertMinToMillis(1);
             case LongBreak:
                 return convertMinToMillis(15);
             case ShortBreak:
@@ -118,12 +121,15 @@ public class TimerService extends Service {
 
     public void resumeTimer() {
         PAUSE = false;
+        mStartTime = System.currentTimeMillis()  - mCurTime;
     }
 
     public float getProgress() {
         float progress;
         // Current time wrt to starting time divided by interval time both in millis
-        progress = (float) ( mCurTime / mCurInterval) * 100;
+        Log.d(TAG, "getProgress: mCurTime = " + mCurTime + " mLength " + mIntervalLength);
+        progress = ((float)mCurTime)/ mIntervalLength * 100;
+        Log.d(TAG, "getProgress: " + progress);
         return progress;
     }
 
