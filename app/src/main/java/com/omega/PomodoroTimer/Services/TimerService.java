@@ -61,15 +61,14 @@ public class TimerService extends Service {
     }
 
     public void startInterval() {
-        if (mCurInterval % 2 == 0) {
-            mIntervalLength = convertMinToMillis(25);
-        } else if (mCurInterval == mIntervals) {
-            mIntervalLength = convertMinToMillis(15);
-        } else {
-            mIntervalLength = convertMinToMillis(5);
+        mIntervalLength = getIntervalLength();
+        if (mIntervalLength != -1) {
+            runTimer();
         }
-        mStartTime = System.currentTimeMillis();
+    }
 
+    private void runTimer() {
+        mStartTime = System.currentTimeMillis();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -84,10 +83,33 @@ public class TimerService extends Service {
                         e.printStackTrace();
                     }
                 }
-                mCurInterval++; // The interval is over, increment to next interval.
-                mCurTime = 0;
+                incrementTimer();
+            }
+
+            private void incrementTimer() {
+                if (mCurInterval == mIntervals) {  // Update Interval
+                    mCurInterval = 0;
+                } else{
+                    mCurInterval ++;
+                }
+                mCurTime = 0; // Reset Timer
             }
         }).start();
+    }
+
+    private long getIntervalLength() {
+        States currentState = getState();
+
+        switch (currentState) {
+            case Interval:
+                return convertMinToMillis(25);
+            case LongBreak:
+                return convertMinToMillis(15);
+            case ShortBreak:
+                return convertMinToMillis(5);
+        }
+
+        return -1;
     }
 
     public void pauseTimer() {
@@ -107,6 +129,18 @@ public class TimerService extends Service {
 
     public long getCurTime(){
         return mCurTime;
+    }
+
+    public States getState() {
+        if (mCurInterval == mIntervals) {
+            return States.LongBreak;
+        } else if (mCurInterval % 2 != 0) {
+            return States.ShortBreak;
+        } else if (mCurInterval % 2 == 0) {
+            return States.Interval;
+        }
+
+        return null;
     }
 
     public States startTimer() {
