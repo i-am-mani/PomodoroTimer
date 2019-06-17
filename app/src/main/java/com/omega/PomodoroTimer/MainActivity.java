@@ -12,6 +12,7 @@ import android.os.IBinder;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.TextView;
 
 import com.mikhaellopez.circularprogressbar.CircularProgressBar;
 import com.omega.PomodoroTimer.Services.TimerService;
@@ -39,6 +40,9 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.progress_bar_inner)
     CircularProgressBar pbInner;
 
+    @BindView(R.id.text_time)
+    TextView tvTime;
+
     ServiceConnection mServiceConnection = new TimerServiceConnection();
     TimerService mTimerService = null;
 
@@ -49,9 +53,23 @@ public class MainActivity extends AppCompatActivity {
     private Thread mUpdateProgressThread = new Thread(new Runnable() {
         @Override
         public void run() {
-            int progress = mTimerService.getProgress();
+            float progress = mTimerService.getProgress();
             long time = mTimerService.getCurTime();
 
+            States curState = mTimerService.getState();
+
+            if (curState == States.Interval) {
+                pbOuter.setProgress(progress);
+            } else{
+                pbInner.setProgress(progress);
+            }
+
+            int seconds = (int) (time / 1000);
+            int minutes = seconds / 60;
+            seconds = seconds % 60;
+            tvTime.setText(String.format("%d:%02d", minutes, seconds));
+
+            progressHandler.postDelayed(this, 500);
         }
     });
 
