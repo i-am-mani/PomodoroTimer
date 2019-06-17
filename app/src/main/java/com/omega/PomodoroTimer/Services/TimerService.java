@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import com.omega.PomodoroTimer.MainActivity;
+import com.omega.PomodoroTimer.MainActivity.States;
 import com.omega.PomodoroTimer.R;
 
 public class TimerService extends Service {
@@ -19,8 +20,8 @@ public class TimerService extends Service {
     private long mStartTime;
     private int mIntervals = 4; // default intervals in each Pomodoro
     private int mCurInterval = 0; // current interval number
-    private long mCurTime; // current time in seconds, updated by thread.
-    private long mIntervalLength; // interval end time for thread
+    private long mCurTime = 0; // current time in seconds, updated by thread.
+    private long mIntervalLength = 0; // interval end time for thread
 
     NotificationCompat.Builder notification = new NotificationCompat.Builder(getApplicationContext(), "CHANNEL_ID_IS_TIMER")
             .setSmallIcon(R.mipmap.ic_launcher)
@@ -84,6 +85,7 @@ public class TimerService extends Service {
                     }
                 }
                 mCurInterval++; // The interval is over, increment to next interval.
+                mCurTime = 0;
             }
         }).start();
     }
@@ -94,6 +96,30 @@ public class TimerService extends Service {
 
     public void resumeTimer() {
         PAUSE = false;
+    }
+
+    public int getProgress() {
+        int progress;
+        // Current time wrt to starting time divided by interval time both in millis
+        progress = (int) ( mCurTime / mCurInterval) * 100;
+        return progress;
+    }
+
+    public long getCurTime(){
+        return mCurTime;
+    }
+
+    public States startTimer() {
+        if (mCurTime != 0) {
+            startInterval();  // Since the timer count isn't zero it's already running, start if paused
+            return States.Resumed;
+        } else if(mCurTime == 0){
+            startInterval(); // start the timer
+            return States.Playing;
+        } else{
+            pauseTimer();
+            return States.Paused;
+        }
     }
 
     private long convertMinToMillis(int i) {
