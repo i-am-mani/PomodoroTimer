@@ -7,7 +7,7 @@
     tools:context=".MainActivity">
 
     <com.mikhaellopez.circularprogressbar.CircularProgressBar
-        android:id="@+id/circularProgressBar2"
+        android:id="@+id/progress_bar_inner"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="32dp"
@@ -16,23 +16,23 @@
         android:layout_marginBottom="32dp"
         app:cpb_background_progressbar_color="#CDE2D4"
         app:cpb_background_progressbar_width="5dp"
-        app:cpb_progress="100"
+        app:cpb_progress="0"
         app:cpb_progressbar_color="#53A056"
         app:cpb_progressbar_width="30dp"
-        app:layout_constraintBottom_toBottomOf="@+id/circularProgressBar"
-        app:layout_constraintEnd_toEndOf="@+id/circularProgressBar"
+        app:layout_constraintBottom_toBottomOf="@+id/progress_bar_outer"
+        app:layout_constraintEnd_toEndOf="@+id/progress_bar_outer"
         app:layout_constraintStart_toStartOf="@+id/guideline3"
-        app:layout_constraintTop_toTopOf="@+id/circularProgressBar"
+        app:layout_constraintTop_toTopOf="@+id/progress_bar_outer"
         app:layout_constraintVertical_bias="0.502" />
 
 
     <com.mikhaellopez.circularprogressbar.CircularProgressBar
-        android:id="@+id/circularProgressBar"
+        android:id="@+id/progress_bar_outer"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:cpb_background_progressbar_color="#F0D5C2"
         app:cpb_background_progressbar_width="5dp"
-        app:cpb_progress="100"
+        app:cpb_progress="0"
         app:cpb_progressbar_color="#C04733"
         app:cpb_progressbar_width="30dp"
         app:layout_constraintBottom_toTopOf="@+id/guideline8"
@@ -109,7 +109,7 @@
         app:layout_constraintTop_toTopOf="@+id/guideline9" />
 
     <ImageButton
-        android:id="@+id/imageButton"
+        android:id="@+id/button_start"
         android:layout_width="173dp"
         android:layout_height="89dp"
         android:layout_marginStart="8dp"
@@ -123,6 +123,6 @@
         app:layout_constraintHorizontal_bias="0.514"
         app:layout_constraintStart_toStartOf="@+id/guideline3"
         app:layout_constraintTop_toTopOf="@+id/guideline8"
-        app:srcCompat="@drawable/ic_play_arrow_black_24dp" />
+        app:srcCompat="@drawable/ic_play" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
