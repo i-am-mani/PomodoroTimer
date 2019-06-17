@@ -120,10 +120,10 @@ public class TimerService extends Service {
         PAUSE = false;
     }
 
-    public int getProgress() {
-        int progress;
+    public float getProgress() {
+        float progress;
         // Current time wrt to starting time divided by interval time both in millis
-        progress = (int) ( mCurTime / mCurInterval) * 100;
+        progress = (float) ( mCurTime / mCurInterval) * 100;
         return progress;
     }
 
@@ -145,10 +145,10 @@ public class TimerService extends Service {
 
     public States startTimer() {
         if (mCurTime != 0) {
-            startInterval();  // Since the timer count isn't zero it's already running, start if paused
+            resumeTimer();  // start if paused
             return States.Resumed;
         } else if(mCurTime == 0){
-            startInterval(); // start the timer
+            startInterval(); // start the -timer-
             return States.Playing;
         } else{
             pauseTimer();
