@@ -10,10 +10,15 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.transition.Fade;
+import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.ScaleAnimation;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.mikhaellopez.circularprogressbar.CircularProgressBar;
@@ -28,21 +33,18 @@ public class MainActivity extends AppCompatActivity {
     private String TAG = this.getClass().getSimpleName();
 
     private enum ButtonStates{
-        Play,Pause;
+        Play,Pause
     }
 
     public enum States{
-        Resumed,Playing,Paused,ShortBreak,LongBreak,Interval;
+        Resumed,Playing,Paused,ShortBreak,LongBreak,Interval
     }
 
     @BindView(R.id.button_start)
     ImageButton btnStart;
 
-    @BindView(R.id.progress_bar_outer)
-    CircularProgressBar pbOuter;
-
-    @BindView(R.id.progress_bar_inner)
-    CircularProgressBar pbInner;
+    @BindView(R.id.progress_bar)
+    ProgressBar progressBar;
 
     @BindView(R.id.text_time)
     TextView tvTime;
@@ -51,6 +53,9 @@ public class MainActivity extends AppCompatActivity {
     TimerService mTimerService = null;
 
     ButtonStates buttonState = ButtonStates.Play;
+
+    @BindView(R.id.layout_main)
+    ViewGroup viewGroup ;
 
     private Handler progressHandler = new Handler();
 
@@ -63,9 +68,15 @@ public class MainActivity extends AppCompatActivity {
             States curState = mTimerService.getState();
 
             if (curState == States.Interval) {
-                pbOuter.setProgress(progress);
+                if (progressBar.getProgressDrawable() == getDrawable(R.drawable.tomato_progress_bar)) {
+                  progressBar.setProgress((int)progress);
+                }
+                else{
+                    progressBar.setProgressDrawable(getDrawable(R.drawable.tomato_progress_bar));
+                    progressBar.setProgress((int)progress);
+                }
             } else{
-                pbInner.setProgress(progress);
+
             }
 
             int seconds = (int) (time / 1000);
@@ -109,13 +120,17 @@ public class MainActivity extends AppCompatActivity {
     @OnClick(R.id.button_start)
     public void manageTimerState(View view) {
         if (buttonState == ButtonStates.Play) {
-            btnStart.setImageResource(R.drawable.ic_pause);
-            buttonState = ButtonStates.Pause;
+            btnStart.animate().scaleY(0).scaleX(0).setDuration(500).withEndAction(()->{
+                btnStart.setImageResource(R.drawable.ic_pause);
+                btnStart.animate().scaleX(1).scaleY(1);});
 
+            buttonState = ButtonStates.Pause;
             States state = mTimerService.startTimer();
             handleState(state);
         } else if (buttonState == ButtonStates.Pause) {
-            btnStart.setImageResource(R.drawable.ic_play);
+            btnStart.animate().scaleY(0).scaleX(0).setDuration(500).withEndAction(()->{
+                btnStart.setImageResource(R.drawable.ic_play);
+                btnStart.animate().scaleX(1).scaleY(1);});
             buttonState = ButtonStates.Play;
 
             mTimerService.pauseTimer();
