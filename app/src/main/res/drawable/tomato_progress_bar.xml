@@ -5,7 +5,7 @@
     </item>
 
     <item android:id="@android:id/secondaryProgress">
-        <clip android:drawable="@drawable/ic_tomato_foreground" />
+        <clip android:drawable="@drawable/ic_tomato_foreground"/>
     </item>
 
     <item android:id="@android:id/progress">
