@@ -22,7 +22,7 @@ public class TimerService extends Service {
     private int mIntervals = 4; // default intervals in each Pomodoro
     private int mCurInterval = 0; // current interval number
     private long mCurTime = 0; // current time in seconds, updated by thread.
-    private long mIntervalLength = 0; // interval end time for thread
+    private long mIntervalLength = 0; // interval end time for thread,could be 5 or 15 or 25
     private String TAG = getClass().getSimpleName();
 
 
@@ -69,6 +69,9 @@ public class TimerService extends Service {
         }
     }
 
+    /**
+     * Starts Timer thread to update time until it is greater then specified interval length
+     */
     private void runTimer() {
         mStartTime = System.currentTimeMillis();
         new Thread(new Runnable() {
@@ -90,7 +93,8 @@ public class TimerService extends Service {
             }
 
             private void incrementTimer() {
-                if (mCurInterval == mIntervals) {  // Update Interval
+                // Update Interval
+                if (mCurInterval == mIntervals) {
                     mCurInterval = 0;
                 } else{
                     mCurInterval ++;
@@ -100,6 +104,10 @@ public class TimerService extends Service {
         }).start();
     }
 
+    /**
+     * Returns Interval length based on current state ( States - enum )
+     * @return millis in current interval
+     */
     private long getIntervalLength() {
         States currentState = getState();
 
@@ -109,7 +117,7 @@ public class TimerService extends Service {
             case LongBreak:
                 return convertMinToMillis(15);
             case ShortBreak:
-                return convertMinToMillis(5);
+                return convertMinToMillis(1);
         }
 
         return -1;
@@ -121,6 +129,7 @@ public class TimerService extends Service {
 
     public void resumeTimer() {
         PAUSE = false;
+        // Calculate relative time, (current time - time before pause)
         mStartTime = System.currentTimeMillis()  - mCurTime;
     }
 
@@ -128,7 +137,7 @@ public class TimerService extends Service {
         float progress;
         // Current time wrt to starting time divided by interval time both in millis
         Log.d(TAG, "getProgress: mCurTime = " + mCurTime + " mLength " + mIntervalLength);
-        progress = ((float)mCurTime)/ mIntervalLength * 100;
+        progress = ((float)mCurTime) / mIntervalLength * 100;
         Log.d(TAG, "getProgress: " + progress);
         return progress;
     }
@@ -154,7 +163,7 @@ public class TimerService extends Service {
             resumeTimer();  // start if paused
             return States.Resumed;
         } else if(mCurTime == 0){
-            startInterval(); // start the -timer-
+            startInterval(); // start the timer
             return States.Playing;
         } else{
             pauseTimer();
@@ -162,7 +171,7 @@ public class TimerService extends Service {
         }
     }
 
-    private long convertMinToMillis(int i) {
-        return i * 60 * 1000;
+    private long convertMinToMillis(float i) {
+        return  10 * 1000;
     }
 }
