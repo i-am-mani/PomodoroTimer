@@ -24,6 +24,8 @@ import android.widget.TextView;
 import com.mikhaellopez.circularprogressbar.CircularProgressBar;
 import com.omega.PomodoroTimer.Services.TimerService;
 
+import javax.crypto.interfaces.PBEKey;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -57,42 +59,81 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.layout_main)
     ViewGroup viewGroup ;
 
+    States mProgressBarStatus = States.Interval;
+
     private Handler progressHandler = new Handler();
 
     private Thread mUpdateProgressThread = new Thread(new Runnable() {
         @Override
         public void run() {
-            float progress = mTimerService.getProgress();
+            int progress =(int) mTimerService.getProgress();
             long time = mTimerService.getCurTime();
 
             States curState = mTimerService.getState();
-
-            if (curState == States.Interval) {
-                if (progressBar.getProgressDrawable() == getDrawable(R.drawable.tomato_progress_bar)) {
-                  progressBar.setProgress((int)progress);
-                }
-                else{
-                    progressBar.setProgressDrawable(getDrawable(R.drawable.tomato_progress_bar));
-                    progressBar.setProgress((int)progress);
-                }
-            } else{
-
-            }
+//
+//            if (curState == States.Interval) {
+//                updateIntervalProgress(progress);
+//            } else if (curState == States.ShortBreak) {
+//                updateShortBreakProgress(progress);
+//            }
+            progressBar.setProgress(progress);
 
             int seconds = (int) (time / 1000);
             int minutes = seconds / 60;
             seconds = seconds % 60;
             tvTime.setText(String.format("%d:%02d", minutes, seconds));
 
-            Log.d(TAG, "run: time = " + String.format("%d:%02d", minutes, seconds));
+//            Log.d(TAG, "run: time = " + String.format("%d:%02d", minutes, seconds));
 
-            if (progress >= 100) {
+            if ( mProgressBarStatus != curState) {
+//                try {
+//                    Thread.sleep(1000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+                if (curState == States.Interval) {
+                    progressBar.animate().scaleX(0).scaleY(0).setDuration(250).withEndAction(()->{
+                        progressBar.setProgressDrawable(getDrawable(R.drawable.tomato_progress_bar));
+                        progressBar.animate().scaleX(1).scaleY(1);
+                    });
+                    mProgressBarStatus = curState;
+                } else if (curState == States.ShortBreak) {
+                    progressBar.animate().scaleX(0).scaleY(0).setDuration(250).withEndAction(()->{
+                        progressBar.setProgressDrawable(getDrawable(R.drawable.coffee_break_bar));
+                        progressBar.animate().scaleX(1).scaleY(1).setDuration(250);
+                    });
+                    mProgressBarStatus = curState;
+                }
                 btnStart.setImageResource(R.drawable.ic_play);
                 buttonState = ButtonStates.Play;
             }
 
             progressHandler.postDelayed(this, 500);
         }
+//
+//        private void updateShortBreakProgress(int progress) {
+//            if (progressBar.getSecondaryProgress() == R.drawable.tomato_progress_bar) {
+//                progressBar.setMax(140);
+//                progressBar.animate().scaleX(0).scaleY(0).setDuration(250).withEndAction(()->{
+//                    progressBar.setProgressDrawable(getDrawable(R.drawable.coffee_break_bar));
+//                    progressBar.animate().scaleX(1).scaleY(1);
+//                });
+//            }
+//            progressBar.setProgress(progress);
+//        }
+//
+//        private void updateIntervalProgress(int progress) {
+//            Log.d(TAG, "updateIntervalProgress: " + progressBar.);
+//            if (progressBar.getBackground() == getDrawable(R.drawable.ic_tomato_background) ) {
+//              progressBar.setProgress(progress);
+//                progressBar.animate().scaleX(0).scaleY(0).setDuration(250).withEndAction(()->{
+//                    progressBar.setProgressDrawable(getDrawable(R.drawable.tomato_progress_bar));
+//                    progressBar.animate().scaleX(1).scaleY(1).setDuration(250);
+//                });
+//            }
+//            progressBar.setProgress(progress);
+
+//        }
     });
 
     @Override
@@ -120,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
     @OnClick(R.id.button_start)
     public void manageTimerState(View view) {
         if (buttonState == ButtonStates.Play) {
-            btnStart.animate().scaleY(0).scaleX(0).setDuration(500).withEndAction(()->{
+            btnStart.animate().scaleY(0).scaleX(0).setDuration(250).withEndAction(()->{
                 btnStart.setImageResource(R.drawable.ic_pause);
                 btnStart.animate().scaleX(1).scaleY(1);});
 
@@ -128,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
             States state = mTimerService.startTimer();
             handleState(state);
         } else if (buttonState == ButtonStates.Pause) {
-            btnStart.animate().scaleY(0).scaleX(0).setDuration(500).withEndAction(()->{
+            btnStart.animate().scaleY(0).scaleX(0).setDuration(250).withEndAction(()->{
                 btnStart.setImageResource(R.drawable.ic_play);
                 btnStart.animate().scaleX(1).scaleY(1);});
             buttonState = ButtonStates.Play;
