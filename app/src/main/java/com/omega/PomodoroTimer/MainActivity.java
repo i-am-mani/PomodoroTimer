@@ -2,7 +2,6 @@ package com.omega.PomodoroTimer;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -10,21 +9,14 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.transition.Fade;
-import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.ScaleAnimation;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.mikhaellopez.circularprogressbar.CircularProgressBar;
 import com.omega.PomodoroTimer.Services.TimerService;
-
-import javax.crypto.interfaces.PBEKey;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -64,76 +56,62 @@ public class MainActivity extends AppCompatActivity {
     private Handler progressHandler = new Handler();
 
     private Thread mUpdateProgressThread = new Thread(new Runnable() {
+
+
+
         @Override
         public void run() {
-            int progress =(int) mTimerService.getProgress();
-            long time = mTimerService.getCurTime();
+            setTime();
+            setProgress();
+            changeProgressBarDrawable();
+            progressHandler.postDelayed(this, 500);
+        }
 
+        private void changeProgressBarDrawable() {
             States curState = mTimerService.getState();
-//
-//            if (curState == States.Interval) {
-//                updateIntervalProgress(progress);
-//            } else if (curState == States.ShortBreak) {
-//                updateShortBreakProgress(progress);
-//            }
-            progressBar.setProgress(progress);
+            if ( mProgressBarStatus != curState) {
+                setDrawable(curState);
+                setButtonResource();
+            }
+        }
 
+        private void setDrawable(States curState) {
+            if (curState == States.Interval) {
+                initTimerBackground(curState,R.drawable.tomato_progress_bar);
+            } else if (curState == States.ShortBreak) {
+                initTimerBackground(curState, R.drawable.coffee_break_bar);
+            } else if (curState == States.LongBreak) {
+                initTimerBackground(curState, R.drawable.orange_drink_bar);
+            }
+        }
+
+        private void setButtonResource() {
+            btnStart.setImageResource(R.drawable.ic_play);
+            buttonState = ButtonStates.Play;
+        }
+
+        private void setProgress() {
+            int progress =(int) mTimerService.getProgress();
+            progressBar.setProgress(progress);
+        }
+
+        private void setTime() {
+            long time = mTimerService.getCurTime();
             int seconds = (int) (time / 1000);
             int minutes = seconds / 60;
             seconds = seconds % 60;
+
             tvTime.setText(String.format("%d:%02d", minutes, seconds));
-
-//            Log.d(TAG, "run: time = " + String.format("%d:%02d", minutes, seconds));
-
-            if ( mProgressBarStatus != curState) {
-//                try {
-//                    Thread.sleep(1000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-                if (curState == States.Interval) {
-                    progressBar.animate().scaleX(0).scaleY(0).setDuration(250).withEndAction(()->{
-                        progressBar.setProgressDrawable(getDrawable(R.drawable.tomato_progress_bar));
-                        progressBar.animate().scaleX(1).scaleY(1);
-                    });
-                    mProgressBarStatus = curState;
-                } else if (curState == States.ShortBreak) {
-                    progressBar.animate().scaleX(0).scaleY(0).setDuration(250).withEndAction(()->{
-                        progressBar.setProgressDrawable(getDrawable(R.drawable.coffee_break_bar));
-                        progressBar.animate().scaleX(1).scaleY(1).setDuration(250);
-                    });
-                    mProgressBarStatus = curState;
-                }
-                btnStart.setImageResource(R.drawable.ic_play);
-                buttonState = ButtonStates.Play;
-            }
-
-            progressHandler.postDelayed(this, 500);
         }
-//
-//        private void updateShortBreakProgress(int progress) {
-//            if (progressBar.getSecondaryProgress() == R.drawable.tomato_progress_bar) {
-//                progressBar.setMax(140);
-//                progressBar.animate().scaleX(0).scaleY(0).setDuration(250).withEndAction(()->{
-//                    progressBar.setProgressDrawable(getDrawable(R.drawable.coffee_break_bar));
-//                    progressBar.animate().scaleX(1).scaleY(1);
-//                });
-//            }
-//            progressBar.setProgress(progress);
-//        }
-//
-//        private void updateIntervalProgress(int progress) {
-//            Log.d(TAG, "updateIntervalProgress: " + progressBar.);
-//            if (progressBar.getBackground() == getDrawable(R.drawable.ic_tomato_background) ) {
-//              progressBar.setProgress(progress);
-//                progressBar.animate().scaleX(0).scaleY(0).setDuration(250).withEndAction(()->{
-//                    progressBar.setProgressDrawable(getDrawable(R.drawable.tomato_progress_bar));
-//                    progressBar.animate().scaleX(1).scaleY(1).setDuration(250);
-//                });
-//            }
-//            progressBar.setProgress(progress);
 
-//        }
+        private void initTimerBackground(States curState, int p) {
+            progressBar.animate().scaleX(0).scaleY(0).setDuration(250).withEndAction(() -> {
+                progressBar.setProgressDrawable(getDrawable(p));
+                progressBar.animate().scaleX(1).scaleY(1).setDuration(250);
+            });
+            mProgressBarStatus = curState;
+        }
+
     });
 
     @Override
