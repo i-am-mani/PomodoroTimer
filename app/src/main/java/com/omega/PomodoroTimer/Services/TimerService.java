@@ -1,11 +1,18 @@
 package com.omega.PomodoroTimer.Services;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.RemoteViews;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -16,6 +23,8 @@ import com.omega.PomodoroTimer.R;
 
 public class TimerService extends Service {
 
+    private static final int NOTIFICATION_ID = 25515;
+    private static final String ACTION_STOP_SERVICE = "123";
     private IBinder serviceBinder = new ServiceBinder();
     private boolean PAUSE = false;
     private long mStartTime;
@@ -24,6 +33,7 @@ public class TimerService extends Service {
     private long mCurTime = 0; // current time in seconds, updated by thread.
     private long mIntervalLength = 0; // interval end time for thread,could be 5 or 15 or 25
     private String TAG = getClass().getSimpleName();
+    NotificationCompat.Builder notification;
 
 
     private PendingIntent getPendingIntent() {
@@ -40,6 +50,17 @@ public class TimerService extends Service {
         buildNotification();
     }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (ACTION_STOP_SERVICE.equals(intent.getAction())) {
+            NotificationManager systemService = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            Log.d(TAG,"called to cancel service");
+            systemService.cancel(NOTIFICATION_ID);
+            stopSelf();
+        }
+        return START_NOT_STICKY;
+    }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -54,12 +75,31 @@ public class TimerService extends Service {
     }
 
     private void buildNotification() {
-
-        NotificationCompat.Builder notification = new NotificationCompat.Builder(this, "CHANNEL_ID_IS_TIMER")
+        createNotificationChannel();
+        Intent stopSelf = new Intent(this, TimerService.class);
+        stopSelf.setAction(this.ACTION_STOP_SERVICE);
+//        RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.finish_dialog);
+//        remoteViews.setInt(R.id.imageView2,"setBackgroundResource",R.layout.finish_dialog);
+        notification = new NotificationCompat.Builder(this, "interval")
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("My Awesome App")
-                .setContentIntent(getPendingIntent());
-        startForeground(1337, notification.build());
+                .setContentIntent(getPendingIntent()).setProgress(100, 30, false)
+//                .setCustomBigContentView(remoteViews)
+                .addAction(R.drawable.ic_pause, "Close", PendingIntent.getService(this, 0, stopSelf, PendingIntent.FLAG_CANCEL_CURRENT));
+        startForeground(NOTIFICATION_ID, notification.build());
+    }
+
+    private void createNotificationChannel() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "Interval";
+            String description = "Timer is running";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel("interval", name, importance);
+            channel.setDescription(description);
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
     }
 
     public void startInterval() {
