@@ -63,10 +63,10 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void run() {
-            setTime();
-            setProgress();
-            changeProgressBarDrawable();
             if (mTimerService != null) {
+                setTime();
+                setProgress();
+                changeProgressBarDrawable();
                 progressHandler.postDelayed(this, 500);
             }
         }
@@ -132,7 +132,24 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, TimerService.class);
         startService(intent);
         bindService(intent,mServiceConnection, Context.BIND_AUTO_CREATE);
-        //TODO Resume existing timer if found running
+
+        // TODO: 28-06-2019 set ProgressBar Drawable
+//        switch (mProgressBarStatus = mTimerService.getState()) {
+//            case ShortBreak:
+//                progressBar.setProgressDrawable(getDrawable(R.drawable.coffee_break_bar));
+//                break;
+//            case LongBreak:
+//                progressBar.setProgressDrawable(getDrawable(R.drawable.orange_drink_bar));
+//                break;
+//            case Interval:
+//                progressBar.setProgressDrawable(getDrawable(R.drawable.tomato_progress_bar));
+//                break;
+//        }
+
+        // TODO: 28-06-2019 set Timer
+
+
+        // TODO: 28-06-2019 setIcon
     }
 
     @Override
@@ -178,6 +195,10 @@ public class MainActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             TimerService.ServiceBinder timerService = (TimerService.ServiceBinder) service;
             mTimerService = timerService.getService();
+
+            if (mTimerService.getCurTime() != 0) {
+                mUpdateProgressThread.start();
+            }
             Log.d(TAG, "onServiceConnected: service alive ?  " + mTimerService);
         }
 
