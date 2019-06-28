@@ -2,16 +2,19 @@ package com.omega.PomodoroTimer;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -58,13 +61,14 @@ public class MainActivity extends AppCompatActivity {
     private Thread mUpdateProgressThread = new Thread(new Runnable() {
 
 
-
         @Override
         public void run() {
             setTime();
             setProgress();
             changeProgressBarDrawable();
-            progressHandler.postDelayed(this, 500);
+            if (mTimerService != null) {
+                progressHandler.postDelayed(this, 500);
+            }
         }
 
         private void changeProgressBarDrawable() {
@@ -79,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
             if (curState == States.Interval) {
                 initTimerBackground(curState,R.drawable.tomato_progress_bar);
             } else if (curState == States.ShortBreak) {
+                showFinishDialog();
                 initTimerBackground(curState, R.drawable.coffee_break_bar);
             } else if (curState == States.LongBreak) {
                 initTimerBackground(curState, R.drawable.orange_drink_bar);
@@ -125,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         Intent intent = new Intent(this, TimerService.class);
+        startService(intent);
         bindService(intent,mServiceConnection, Context.BIND_AUTO_CREATE);
         //TODO Resume existing timer if found running
     }
@@ -180,4 +186,14 @@ public class MainActivity extends AppCompatActivity {
             mTimerService = null;
         }
     }
+
+    public void showFinishDialog() {
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.finish_dialog);
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        dialog.show();
+    }
+
 }
