@@ -12,7 +12,6 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.RemoteViews;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -24,16 +23,17 @@ import com.omega.PomodoroTimer.R;
 public class TimerService extends Service {
 
     private static final int NOTIFICATION_ID = 25515;
-    private static final String ACTION_STOP_SERVICE = "123";
-    private IBinder serviceBinder = new ServiceBinder();
+    private static final String ACTION_STOP_SERVICE = "0";
+    private static final String ACTION_PAUSE_TIMER = "1";
+    private static final String ACTION_START_TIMER = "2";
     private boolean PAUSE = false;
+    private IBinder serviceBinder = new ServiceBinder();
     private long mStartTime;
     private int mIntervals = 4; // default intervals in each Pomodoro
     private int mCurInterval = 0; // current interval number
     private long mCurTime = 0; // current time in seconds, updated by thread.
     private long mIntervalLength = 0; // interval end time for thread,could be 5 or 15 or 25
     private String TAG = getClass().getSimpleName();
-    NotificationCompat.Builder notification;
 
 
     private PendingIntent getPendingIntent() {
@@ -54,9 +54,14 @@ public class TimerService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (ACTION_STOP_SERVICE.equals(intent.getAction())) {
             NotificationManager systemService = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            Log.d(TAG,"called to cancel service");
             systemService.cancel(NOTIFICATION_ID);
             stopSelf();
+        } else if (ACTION_PAUSE_TIMER.equals(intent.getAction())) {
+            pauseTimer();
+            updateNotification();
+        } else if (ACTION_START_TIMER.equals(intent.getAction())) {
+            startTimer();
+            updateNotification();
         }
         return START_NOT_STICKY;
     }
@@ -76,17 +81,65 @@ public class TimerService extends Service {
 
     private void buildNotification() {
         createNotificationChannel();
-        Intent stopSelf = new Intent(this, TimerService.class);
-        stopSelf.setAction(this.ACTION_STOP_SERVICE);
-//        RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.finish_dialog);
-//        remoteViews.setInt(R.id.imageView2,"setBackgroundResource",R.layout.finish_dialog);
+        NotificationCompat.Builder notificationBuilder = getNotificationBuilder();
+        startForeground(NOTIFICATION_ID, notificationBuilder.build());
+    }
+
+    private NotificationCompat.Builder getNotificationBuilder() {
+        NotificationCompat.Builder notification;
         notification = new NotificationCompat.Builder(this, "interval")
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("My Awesome App")
-                .setContentIntent(getPendingIntent()).setProgress(100, 30, false)
-//                .setCustomBigContentView(remoteViews)
-                .addAction(R.drawable.ic_pause, "Close", PendingIntent.getService(this, 0, stopSelf, PendingIntent.FLAG_CANCEL_CURRENT));
-        startForeground(NOTIFICATION_ID, notification.build());
+                .setContentIntent(getPendingIntent());
+
+        String title = getNotificationTitle();
+        String content = getNotificationContent();
+        int progress = (int)getProgress();
+
+        notification.setContentTitle(title);
+        notification.setContentText(content);
+        notification.setProgress(100, progress, false);
+
+        setNotificationActions(notification);
+        return notification;
+    }
+
+    private String getNotificationContent() {
+        long time = getCurTime();
+        int seconds = (int) (time / 1000);
+        int minutes = seconds / 60;
+        seconds = seconds % 60;
+
+        return String.format("%d:%02d", minutes, seconds);
+    }
+
+    private String getNotificationTitle() {
+        String title = "";
+        States state = getState();
+
+        if (state == States.Interval) {
+            title = "Pomodoro";
+        } else if (state == States.LongBreak) {
+            title = "Long Break : Break-Time!";
+        } else if (state == States.ShortBreak) {
+            title = "Short Break";
+        }
+        return title;
+    }
+
+    private void setNotificationActions(NotificationCompat.Builder notification) {
+        Intent pauseTimer = new Intent(this, TimerService.class);
+        pauseTimer.setAction(this.ACTION_PAUSE_TIMER);
+        Intent startTimer = new Intent(this, TimerService.class);
+        startTimer.setAction(this.ACTION_START_TIMER);
+        Intent stopSelf = new Intent(this, TimerService.class);
+        stopSelf.setAction(this.ACTION_STOP_SERVICE);
+
+        notification.addAction(R.drawable.ic_pause, "Close", PendingIntent.getService(this, 0, stopSelf, PendingIntent.FLAG_CANCEL_CURRENT));
+        if (PAUSE || mCurTime == 0) {
+            notification.addAction(R.drawable.ic_play, "Start", PendingIntent.getService(this, 0, startTimer, PendingIntent.FLAG_CANCEL_CURRENT));
+        } else{
+            notification.addAction(R.drawable.ic_pause, "Pause", PendingIntent.getService(this, 0, pauseTimer, PendingIntent.FLAG_CANCEL_CURRENT));
+        }
     }
 
     private void createNotificationChannel() {
@@ -100,6 +153,12 @@ public class TimerService extends Service {
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
+    }
+
+    private void updateNotification() {
+        NotificationCompat.Builder notification = getNotificationBuilder();
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(NOTIFICATION_ID,notification.build());
     }
 
     public void startInterval() {
@@ -125,6 +184,7 @@ public class TimerService extends Service {
                             mCurTime = System.currentTimeMillis() - mStartTime;  // Update time wrt to started time in MILLIS
                             Log.d(TAG, "run: mCurtime " + mCurTime);
                         }
+                        updateNotification();
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -140,6 +200,7 @@ public class TimerService extends Service {
                     mCurInterval ++;
                 }
                 mCurTime = 0; // Reset Timer
+                updateNotification();
             }
         }).start();
     }
