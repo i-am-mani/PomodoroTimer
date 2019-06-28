@@ -11,6 +11,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -56,10 +57,9 @@ public class MainActivity extends AppCompatActivity {
 
     States mProgressBarStatus = States.Interval;
 
-    private Handler progressHandler = new Handler();
+    private Handler progressHandler = new Handler(Looper.getMainLooper());
 
     private Thread mUpdateProgressThread = new Thread(new Runnable() {
-
 
         @Override
         public void run() {
@@ -132,24 +132,6 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, TimerService.class);
         startService(intent);
         bindService(intent,mServiceConnection, Context.BIND_AUTO_CREATE);
-
-        // TODO: 28-06-2019 set ProgressBar Drawable
-//        switch (mProgressBarStatus = mTimerService.getState()) {
-//            case ShortBreak:
-//                progressBar.setProgressDrawable(getDrawable(R.drawable.coffee_break_bar));
-//                break;
-//            case LongBreak:
-//                progressBar.setProgressDrawable(getDrawable(R.drawable.orange_drink_bar));
-//                break;
-//            case Interval:
-//                progressBar.setProgressDrawable(getDrawable(R.drawable.tomato_progress_bar));
-//                break;
-//        }
-
-        // TODO: 28-06-2019 set Timer
-
-
-        // TODO: 28-06-2019 setIcon
     }
 
     @Override
@@ -195,10 +177,8 @@ public class MainActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             TimerService.ServiceBinder timerService = (TimerService.ServiceBinder) service;
             mTimerService = timerService.getService();
-
-            if (mTimerService.getCurTime() != 0) {
-                mUpdateProgressThread.start();
-            }
+            //Resume Thread
+            tvTime.postDelayed(mUpdateProgressThread, 0);
             Log.d(TAG, "onServiceConnected: service alive ?  " + mTimerService);
         }
 
