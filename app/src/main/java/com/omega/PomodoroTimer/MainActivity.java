@@ -173,6 +173,12 @@ public class MainActivity extends AppCompatActivity {
             mTimerService = timerService.getService();
             //Resume Thread
             tvTime.postDelayed(mUpdateProgressThread, 0);
+            boolean paused = mTimerService.isPaused();
+            if (paused || mTimerService.getCurTime() == 0) {
+                setPlayButton();
+            } else {
+                setPauseButton();
+            }
             Log.d(TAG, "onServiceConnected: service alive ?  " + mTimerService);
         }
 
