@@ -6,8 +6,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
@@ -21,7 +19,7 @@ import com.omega.PomodoroTimer.MainActivity.States;
 import com.omega.PomodoroTimer.R;
 
 public class TimerService extends Service {
-
+    private boolean BOUND = false;
     private static final int NOTIFICATION_ID = 25515;
     private static final String ACTION_STOP_SERVICE = "0";
     private static final String ACTION_PAUSE_TIMER = "1";
@@ -47,7 +45,6 @@ public class TimerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        buildNotification();
     }
 
     @Override
@@ -69,7 +66,27 @@ public class TimerService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
+        stopForeground(true);
+        BOUND = true;
         return serviceBinder;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        buildNotification();
+        BOUND = false;
+        return true;
+    }
+
+    @Override
+    public void onRebind(Intent intent) {
+        BOUND = true;
+        super.onRebind(intent);
+        stopForeground(true);
+    }
+
+    public boolean isPaused() {
+        return PAUSE;
     }
 
     public class ServiceBinder extends Binder {
@@ -156,9 +173,11 @@ public class TimerService extends Service {
     }
 
     private void updateNotification() {
-        NotificationCompat.Builder notification = getNotificationBuilder();
-        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(NOTIFICATION_ID,notification.build());
+        if (!BOUND) {
+            NotificationCompat.Builder notification = getNotificationBuilder();
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.notify(NOTIFICATION_ID,notification.build());
+        }
     }
 
     public void startInterval() {
