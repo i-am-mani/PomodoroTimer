@@ -64,8 +64,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             if (mTimerService != null) {
-                setTime();
                 setProgress();
+                setTime();
                 changeProgressBarDrawable();
                 progressHandler.postDelayed(this, 500);
             }
@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
             States curState = mTimerService.getState();
             if ( mProgressBarStatus != curState) {
                 setDrawable(curState);
-                setButtonResource();
+                setPlayButton();
             }
         }
 
@@ -88,11 +88,6 @@ public class MainActivity extends AppCompatActivity {
             } else if (curState == States.LongBreak) {
                 initTimerBackground(curState, R.drawable.orange_drink_bar);
             }
-        }
-
-        private void setButtonResource() {
-            btnStart.setImageResource(R.drawable.ic_play);
-            buttonState = ButtonStates.Play;
         }
 
         private void setProgress() {
@@ -144,32 +139,31 @@ public class MainActivity extends AppCompatActivity {
     @OnClick(R.id.button_start)
     public void manageTimerState(View view) {
         if (buttonState == ButtonStates.Play) {
-            btnStart.animate().scaleY(0).scaleX(0).setDuration(250).withEndAction(()->{
-                btnStart.setImageResource(R.drawable.ic_pause);
-                btnStart.animate().scaleX(1).scaleY(1);});
-
-            buttonState = ButtonStates.Pause;
+            setPauseButton();
             States state = mTimerService.startTimer();
-            handleState(state);
         } else if (buttonState == ButtonStates.Pause) {
-            btnStart.animate().scaleY(0).scaleX(0).setDuration(250).withEndAction(()->{
-                btnStart.setImageResource(R.drawable.ic_play);
-                btnStart.animate().scaleX(1).scaleY(1);});
-            buttonState = ButtonStates.Play;
+            setPlayButton();
 
             mTimerService.pauseTimer();
         }
     }
 
-    private void handleState(States state) {
-        if (state == States.Playing) {
-            setProgressbarListener();
-        }
+    private void setPlayButton() {
+        btnStart.animate().scaleY(0).scaleX(0).setDuration(250).withEndAction(()->{
+            btnStart.setImageResource(R.drawable.ic_play);
+            btnStart.animate().scaleX(1).scaleY(1);});
+        buttonState = ButtonStates.Play;
     }
 
-    private void setProgressbarListener() {
-        tvTime.postDelayed(mUpdateProgressThread, 0);
+    private void setPauseButton() {
+        btnStart.animate().scaleY(0).scaleX(0).setDuration(250).withEndAction(() -> {
+            btnStart.setImageResource(R.drawable.ic_pause);
+            btnStart.animate().scaleX(1).scaleY(1);
+        });
+
+        buttonState = ButtonStates.Pause;
     }
+
 
 
     private class TimerServiceConnection implements ServiceConnection {
