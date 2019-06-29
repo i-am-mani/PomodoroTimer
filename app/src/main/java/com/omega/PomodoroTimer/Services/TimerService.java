@@ -1,13 +1,11 @@
 package com.omega.PomodoroTimer.Services;
 
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Binder;
 import android.os.Build;
@@ -22,6 +20,9 @@ import com.omega.PomodoroTimer.MainActivity.States;
 import com.omega.PomodoroTimer.R;
 
 public class TimerService extends Service {
+    private static final int SHORT_BREAK_TIME = 5;
+    private static final int LONG_BREAK_TIME = 15;
+    private static final int INTERVAL_TIME = 25;
     private boolean BOUND = false;
     private static final int NOTIFICATION_ID = 25515;
     private static final String ACTION_STOP_SERVICE = "0";
@@ -240,11 +241,11 @@ public class TimerService extends Service {
 
         switch (currentState) {
             case Interval:
-                return convertMinToMillis(1);
+                return convertMinToMillis(INTERVAL_TIME );
             case LongBreak:
-                return convertMinToMillis(15);
+                return convertMinToMillis(LONG_BREAK_TIME);
             case ShortBreak:
-                return convertMinToMillis(1);
+                return convertMinToMillis(SHORT_BREAK_TIME);
         }
 
         return -1;
@@ -299,6 +300,6 @@ public class TimerService extends Service {
     }
 
     private long convertMinToMillis(float i) {
-        return  10 * 1000;
+        return  (long)i*10 * 1000;
     }
 }
