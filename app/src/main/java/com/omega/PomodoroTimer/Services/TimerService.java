@@ -1,11 +1,14 @@
 package com.omega.PomodoroTimer.Services;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
@@ -105,7 +108,7 @@ public class TimerService extends Service {
     private NotificationCompat.Builder getNotificationBuilder() {
         NotificationCompat.Builder notification;
         notification = new NotificationCompat.Builder(this, "interval")
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_stat_timer)
                 .setContentIntent(getPendingIntent());
 
         String title = getNotificationTitle();
@@ -167,6 +170,9 @@ public class TimerService extends Service {
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel("interval", name, importance);
             channel.setDescription(description);
+            channel.enableLights(true);
+            channel.setLightColor(Color.GREEN);
+            channel.setImportance(NotificationManager.IMPORTANCE_HIGH);
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
@@ -175,6 +181,7 @@ public class TimerService extends Service {
     private void updateNotification() {
         if (!BOUND) {
             NotificationCompat.Builder notification = getNotificationBuilder();
+            notification.setColor(Color.GREEN);
             NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.notify(NOTIFICATION_ID,notification.build());
         }
