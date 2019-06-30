@@ -2,6 +2,7 @@ package com.omega.PomodoroTimer;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.animation.AnimatorSet;
 import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
@@ -15,8 +16,10 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewPropertyAnimator;
 import android.view.Window;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -28,6 +31,9 @@ import butterknife.OnClick;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String DIALOG_INTERVAL_TITLE = "Time To Get Back To Work";
+    private static final String DIALOG_SHORT_BREAK_TITLE = "Good Work! Take A Short Break";
+    private static final String DIALOG_LONG_BREAK_TITLE = "You Have Earned A Long Break!";
     private String TAG = this.getClass().getSimpleName();
 
     private enum ButtonStates{
@@ -82,12 +88,15 @@ public class MainActivity extends AppCompatActivity {
         private void setDrawable(States curState) {
             if (curState == States.Interval) {
                 initTimerBackground(curState,R.drawable.tomato_progress_bar);
+                tvTime.setTextColor(getColor(R.color.colorAccent));
             } else if (curState == States.ShortBreak) {
-                showFinishDialog();
                 initTimerBackground(curState, R.drawable.coffee_break_bar);
+                tvTime.setTextColor(getColor(R.color.colorAccent));
             } else if (curState == States.LongBreak) {
                 initTimerBackground(curState, R.drawable.orange_drink_bar);
+                tvTime.setTextColor(getColor(R.color.timerGreen));
             }
+            showIntervalDialog(curState);
         }
 
         private void setProgress() {
@@ -140,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
     public void manageTimerState(View view) {
         if (buttonState == ButtonStates.Play) {
             setPauseButton();
-            States state = mTimerService.startTimer();
+            mTimerService.startTimer();
         } else if (buttonState == ButtonStates.Pause) {
             setPlayButton();
 
@@ -188,12 +197,47 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void showFinishDialog() {
+    public Dialog getDialog() {
         Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.finish_dialog);
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        return dialog;
+    }
+
+    public void showIntervalDialog(States state) {
+        Dialog dialog = getDialog();
+        dialog.setOnShowListener((v)->{
+            TextView tvTitle = dialog.findViewById(R.id.text_title);
+            ImageView ivBackground = dialog.findViewById(R.id.image_background);
+            Log.d(TAG, "showIntervalDialog: "+tvTitle);
+            switch (state) {
+                case ShortBreak:
+                    tvTitle.setText(DIALOG_SHORT_BREAK_TITLE);
+                    tvTitle.setTextColor(getColor(R.color.success));
+                    ivBackground.setImageResource(R.drawable.ic_glass_of_water);
+                    break;
+                case LongBreak:
+                    tvTitle.setText(DIALOG_LONG_BREAK_TITLE);
+                    tvTitle.setTextColor(getColor(R.color.success));
+                    ivBackground.setImageResource(R.drawable.ic_run_shoe);
+                    break;
+                case Interval:
+                    tvTitle.setText(DIALOG_INTERVAL_TITLE);
+                    tvTitle.setTextColor(getColor(R.color.readyBlue));
+                    ivBackground.setImageResource(R.drawable.ic_star);
+                    break;
+            }
+            new Handler().postDelayed(()->{
+                if (dialog.isShowing()) {
+                    ViewPropertyAnimator tvAnim = tvTitle.animate().scaleX(0).scaleY(0).withEndAction(()->tvTitle.setVisibility(View.GONE)).setDuration(500);
+                    ViewPropertyAnimator ivAnim = ivBackground.animate().scaleY(0).scaleX(0).withEndAction(() -> {ivBackground.setVisibility(View.GONE);dialog.dismiss();}).setDuration(500);
+                    tvAnim.start();
+                    ivAnim.start();
+                }
+            },3000);
+        });
         dialog.show();
     }
 
