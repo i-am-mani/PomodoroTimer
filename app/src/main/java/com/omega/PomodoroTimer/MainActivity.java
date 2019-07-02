@@ -160,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
     private void setPlayButton() {
         btnStart.animate().scaleY(0).scaleX(0).setDuration(250).withEndAction(()->{
             btnStart.setImageResource(R.drawable.ic_play);
+            btnStart.setTag(R.drawable.ic_play);
             btnStart.animate().scaleX(1).scaleY(1);});
         buttonState = ButtonStates.Play;
     }
@@ -167,6 +168,7 @@ public class MainActivity extends AppCompatActivity {
     private void setPauseButton() {
         btnStart.animate().scaleY(0).scaleX(0).setDuration(250).withEndAction(() -> {
             btnStart.setImageResource(R.drawable.ic_pause);
+            btnStart.setTag(R.drawable.ic_pause);
             btnStart.animate().scaleX(1).scaleY(1);
         });
 
