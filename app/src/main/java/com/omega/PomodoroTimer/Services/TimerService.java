@@ -31,7 +31,7 @@ public class TimerService extends Service {
     private boolean PAUSE = false;
     private IBinder serviceBinder = new ServiceBinder();
     private long mStartTime;
-    private int mIntervals = 4; // default intervals in each Pomodoro
+    private int mIntervals = 5; // default intervals in each Pomodoro
     private int mCurInterval = 0; // current interval number
     private long mCurTime = 0; // current time in seconds, updated by thread.
     private long mIntervalLength = 0; // interval end time for thread,could be 5 or 15 or 25
@@ -300,6 +300,8 @@ public class TimerService extends Service {
     }
 
     private long convertMinToMillis(float i) {
-        return  (long)i*10 * 1000;
+
+//        return  (long)i* 60 * 1000;
+        return 3*1000;
     }
 }
